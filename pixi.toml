@@ -1,0 +1,20 @@
+[project]
+name = "heap-product-dashboard"
+version = "0.1.0"
+description = "Snowflake auth + interactive telemetry time series dashboard"
+authors = ["Owen Price <oprice@anaconda.com>"]
+readme = "README.md"
+channels = ["conda-forge"]
+platforms = ["linux-64", "osx-64", "osx-arm64", "win-64"]
+
+[dependencies]
+python = ">=3.10,<3.13"
+
+[pypi-dependencies]
+snowflake-connector-python = ">=3.6.0"
+streamlit = ">=1.28.0"
+plotly = ">=5.18.0"
+pandas = ">=2.0.0"
+
+[tasks]
+run = "streamlit run app.py"

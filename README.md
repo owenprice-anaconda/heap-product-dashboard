@@ -2,18 +2,25 @@
 
 Web app that authenticates to Snowflake (external browser SSO), caches the token, and shows an interactive time series of telemetry data.
 
-## Setup
+## Setup and run (Pixi)
+
+This project is configured as a [Pixi](https://pixi.sh) project. Install [pixi](https://pixi.sh/latest/getting_started/installation/) then:
+
+```bash
+cd heap-product-dashboard
+pixi install
+pixi run run
+```
+
+Or in one step: `pixi run run` (pixi installs the environment on first run if needed).
+
+## Alternative: venv + pip
 
 ```bash
 cd heap-product-dashboard
 python -m venv .venv
 source .venv/bin/activate   # or .venv\Scripts\activate on Windows
 pip install -r requirements.txt
-```
-
-## Run
-
-```bash
 streamlit run app.py
 ```
 

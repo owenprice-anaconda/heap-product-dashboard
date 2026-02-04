@@ -2,6 +2,7 @@
 .venv/
 venv/
 env/
+.pixi/
 
 # Python
 __pycache__/
