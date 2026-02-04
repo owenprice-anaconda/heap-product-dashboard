@@ -30,6 +30,18 @@ Then:
 2. The connector caches the token (e.g. for ~4 hours) so you can reconnect without logging in again.
 3. The dashboard loads and shows an interactive time series of records by month (by `activity_source` and `product`). Use the legend and filters in the expander to narrow the view.
 
+## Deployment (health endpoint)
+
+For deployment, use the proxy server that exposes a health endpoint and forwards traffic to Streamlit:
+
+```bash
+pixi run start
+```
+
+- Listens on `PORT` (default 8080).
+- **Health check:** `GET /health` returns `200` and `{"status": "ok"}`.
+- All other paths are proxied to Streamlit.
+
 ## Details
 
 - **Connection**: Uses `ANALYTICS.INTERMEDIATE`, warehouse `default`, account `jfb46703.us-east-1`, `authenticator=externalbrowser`.

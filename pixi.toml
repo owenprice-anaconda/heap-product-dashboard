@@ -14,6 +14,11 @@ snowflake-connector-python = ">=3.6.0"
 streamlit = ">=1.28.0"
 plotly = ">=5.18.0"
 pandas = ">=2.0.0"
+fastapi = ">=0.100.0"
+uvicorn = ">=0.22.0"
+httpx = ">=0.24.0"
+websockets = ">=12.0"
 
 [tasks]
 run = "streamlit run app.py"
+start = "python server.py"
