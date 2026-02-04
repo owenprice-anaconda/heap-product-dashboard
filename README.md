@@ -1,0 +1,30 @@
+# Heap Product Dashboard
+
+Web app that authenticates to Snowflake (external browser SSO), caches the token, and shows an interactive time series of telemetry data.
+
+## Setup
+
+```bash
+cd heap-product-dashboard
+python -m venv .venv
+source .venv/bin/activate   # or .venv\Scripts\activate on Windows
+pip install -r requirements.txt
+```
+
+## Run
+
+```bash
+streamlit run app.py
+```
+
+Then:
+
+1. Enter your **Snowflake username** and click **Connect**. A browser window will open for SSO; complete login there.
+2. The connector caches the token (e.g. for ~4 hours) so you can reconnect without logging in again.
+3. The dashboard loads and shows an interactive time series of records by month (by `activity_source` and `product`). Use the legend and filters in the expander to narrow the view.
+
+## Details
+
+- **Connection**: Uses `ANALYTICS.INTERMEDIATE`, warehouse `default`, account `jfb46703.us-east-1`, `authenticator=externalbrowser`.
+- **Token cache**: `client_request_mfa_token=True` so the Snowflake Python connector caches the MFA token on disk for reuse.
+- **Chart**: Plotly time series of `stg_conda_unified_telemetry` aggregated by year/month, `activity_source`, and `product`.
