@@ -1,9 +1,9 @@
 """
-Heap Product Dashboard – Snowflake auth + interactive telemetry time series.
+Heap Product Dashboard – Snowflake auth via access token + interactive telemetry time series.
 Run locally: streamlit run app.py
+Uses token from ocd-product-dashboard-token-secret.txt and SNOWFLAKE_USER env for username.
 """
 import os
-from datetime import datetime
 
 import pandas as pd
 import plotly.express as px
@@ -11,13 +11,13 @@ import plotly.graph_objects as go
 import streamlit as st
 import snowflake.connector
 
-# Fixed connection parameters (user provided at runtime)
+TOKEN_FILE = os.environ.get("SNOWFLAKE_TOKEN_FILE", "ocd-product-dashboard-token-secret.txt")
+
 CONN_PARAMS = {
     "account": "jfb46703.us-east-1",
     "warehouse": "default",
     "database": "ANALYTICS",
     "schema": "INTERMEDIATE",
-    "authenticator": "externalbrowser",
 }
 
 TELEMETRY_QUERY = """
@@ -28,12 +28,25 @@ ORDER BY 1, 2
 """
 
 
-def get_connection(username: str):
-    """Connect to Snowflake with external browser auth; token is cached by the connector."""
+def load_token() -> str:
+    """Read access token from file (first line, stripped)."""
+    path = TOKEN_FILE if os.path.isabs(TOKEN_FILE) else os.path.join(os.path.dirname(__file__), TOKEN_FILE)
+    if not os.path.isfile(path):
+        raise FileNotFoundError(f"Token file not found: {path}")
+    with open(path) as f:
+        return f.read().strip()
+
+
+def get_connection():
+    """Connect to Snowflake using programmatic access token (token as password)."""
+    user = os.environ.get("SNOWFLAKE_USER")
+    if not user:
+        raise ValueError("SNOWFLAKE_USER environment variable is required for token authentication")
+    token = load_token()
     return snowflake.connector.connect(
-        user=username,
+        user=user,
+        password=token,
         **CONN_PARAMS,
-        client_request_mfa_token=True,  # cache token for reuse (e.g. ~4h)
     )
 
 
@@ -85,46 +98,22 @@ def main():
     st.title("Heap Product Dashboard")
     st.caption("Snowflake telemetry time series")
 
-    # Session state for connection and cached username
-    if "conn" not in st.session_state:
-        st.session_state.conn = None
-    if "snowflake_user" not in st.session_state:
-        st.session_state.snowflake_user = None
     if "telemetry_df" not in st.session_state:
         st.session_state.telemetry_df = None
 
-    # ----- Auth -----
-    if st.session_state.conn is None:
-        with st.form("login"):
-            username = st.text_input("Snowflake username", placeholder="your.email@company.com")
-            submit = st.form_submit_button("Connect (opens browser for SSO)")
-            if submit and username:
-                with st.spinner("Opening browser for Snowflake SSO…"):
-                    try:
-                        conn = get_connection(username.strip())
-                        st.session_state.conn = conn
-                        st.session_state.snowflake_user = username.strip()
-                        st.success("Connected. Token is cached for later use.")
-                        st.rerun()
-                    except Exception as e:
-                        st.error(f"Connection failed: {e}")
+    # ----- Connect and load data -----
+    try:
+        conn = get_connection()
+    except FileNotFoundError as e:
+        st.error(f"Configuration error: {e}. Ensure the token file exists.")
+        st.stop()
+    except ValueError as e:
+        st.error(f"Configuration error: {e}. Set SNOWFLAKE_USER in the environment.")
+        st.stop()
+    except Exception as e:
+        st.error(f"Connection failed: {e}")
         st.stop()
 
-    # Connected: show user and option to disconnect
-    st.sidebar.success(f"Connected as **{st.session_state.snowflake_user}**")
-    if st.sidebar.button("Disconnect"):
-        try:
-            if st.session_state.conn:
-                st.session_state.conn.close()
-        except Exception:
-            pass
-        st.session_state.conn = None
-        st.session_state.snowflake_user = None
-        st.session_state.telemetry_df = None
-        st.rerun()
-
-    # ----- Data -----
-    conn = st.session_state.conn
     if st.session_state.telemetry_df is None or st.sidebar.button("Refresh data"):
         with st.spinner("Loading telemetry…"):
             try:
@@ -132,6 +121,10 @@ def main():
             except Exception as e:
                 st.error(f"Query failed: {e}")
                 st.stop()
+    try:
+        conn.close()
+    except Exception:
+        pass
 
     df = st.session_state.telemetry_df
     if df is None or df.empty:

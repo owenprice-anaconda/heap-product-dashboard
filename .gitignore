@@ -18,6 +18,8 @@ __pycache__/
 .env
 .env.local
 *.pem
+snowflake_private_key.pem
+ocd-product-dashboard-token-secret.txt
 
 # IDE
 .idea/

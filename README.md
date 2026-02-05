@@ -1,6 +1,11 @@
 # Heap Product Dashboard
 
-Web app that authenticates to Snowflake (external browser SSO), caches the token, and shows an interactive time series of telemetry data.
+Web app that connects to Snowflake using a programmatic access token and shows an interactive time series of telemetry data. No login page—the app goes straight to the dashboard.
+
+## Configuration
+
+- **Token file:** Place your Snowflake programmatic access token in `ocd-product-dashboard-token-secret.txt` (or set `SNOWFLAKE_TOKEN_FILE` to the path). The file is gitignored.
+- **Username:** Set the `SNOWFLAKE_USER` environment variable to the Snowflake user that the token belongs to.
 
 ## Setup and run (Pixi)
 
@@ -9,10 +14,11 @@ This project is configured as a [Pixi](https://pixi.sh) project. Install [pixi](
 ```bash
 cd heap-product-dashboard
 pixi install
+export SNOWFLAKE_USER=your_snowflake_username
 pixi run run
 ```
 
-Or in one step: `pixi run run` (pixi installs the environment on first run if needed).
+Or in one step: `pixi run run` (set `SNOWFLAKE_USER` in your environment first).
 
 ## Alternative: venv + pip
 
@@ -21,14 +27,11 @@ cd heap-product-dashboard
 python -m venv .venv
 source .venv/bin/activate   # or .venv\Scripts\activate on Windows
 pip install -r requirements.txt
+export SNOWFLAKE_USER=your_snowflake_username
 streamlit run app.py
 ```
 
-Then:
-
-1. Enter your **Snowflake username** and click **Connect**. A browser window will open for SSO; complete login there.
-2. The connector caches the token (e.g. for ~4 hours) so you can reconnect without logging in again.
-3. The dashboard loads and shows an interactive time series of records by month (by `activity_source` and `product`). Use the legend and filters in the expander to narrow the view.
+The dashboard loads immediately and shows an interactive time series of records by month (by `activity_source` and `product`). Use the legend and filters in the expander to narrow the view.
 
 ## Deployment (health endpoint)
 
@@ -44,6 +47,5 @@ pixi run start
 
 ## Details
 
-- **Connection**: Uses `ANALYTICS.INTERMEDIATE`, warehouse `default`, account `jfb46703.us-east-1`, `authenticator=externalbrowser`.
-- **Token cache**: `client_request_mfa_token=True` so the Snowflake Python connector caches the MFA token on disk for reuse.
+- **Connection**: Uses `ANALYTICS.INTERMEDIATE`, warehouse `default`, account `jfb46703.us-east-1`. Authentication via programmatic access token (token in file, used as password).
 - **Chart**: Plotly time series of `stg_conda_unified_telemetry` aggregated by year/month, `activity_source`, and `product`.
