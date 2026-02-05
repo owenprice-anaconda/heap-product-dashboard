@@ -1,7 +1,7 @@
 """
 Heap Product Dashboard – Snowflake auth via access token + interactive telemetry time series.
 Run locally: streamlit run app.py
-Uses token from ocd-product-dashboard-token-secret.txt and SNOWFLAKE_USER env for username.
+Requires SNOWFLAKE_USER and SNOWFLAKE_TOKEN environment variables.
 """
 import os
 
@@ -10,8 +10,6 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 import snowflake.connector
-
-TOKEN_FILE = os.environ.get("SNOWFLAKE_TOKEN_FILE", "ocd-product-dashboard-token-secret.txt")
 
 CONN_PARAMS = {
     "account": "jfb46703.us-east-1",
@@ -28,24 +26,17 @@ ORDER BY 1, 2
 """
 
 
-def load_token() -> str:
-    """Read access token from file (first line, stripped)."""
-    path = TOKEN_FILE if os.path.isabs(TOKEN_FILE) else os.path.join(os.path.dirname(__file__), TOKEN_FILE)
-    if not os.path.isfile(path):
-        raise FileNotFoundError(f"Token file not found: {path}")
-    with open(path) as f:
-        return f.read().strip()
-
-
 def get_connection():
     """Connect to Snowflake using programmatic access token (token as password)."""
     user = os.environ.get("SNOWFLAKE_USER")
+    token = os.environ.get("SNOWFLAKE_TOKEN")
     if not user:
-        raise ValueError("SNOWFLAKE_USER environment variable is required for token authentication")
-    token = load_token()
+        raise ValueError("SNOWFLAKE_USER environment variable is required")
+    if not token:
+        raise ValueError("SNOWFLAKE_TOKEN environment variable is required")
     return snowflake.connector.connect(
         user=user,
-        password=token,
+        password=token.strip(),
         **CONN_PARAMS,
     )
 
@@ -104,11 +95,8 @@ def main():
     # ----- Connect and load data -----
     try:
         conn = get_connection()
-    except FileNotFoundError as e:
-        st.error(f"Configuration error: {e}. Ensure the token file exists.")
-        st.stop()
     except ValueError as e:
-        st.error(f"Configuration error: {e}. Set SNOWFLAKE_USER in the environment.")
+        st.error(f"Configuration error: {e}. Set SNOWFLAKE_USER and SNOWFLAKE_TOKEN in the environment.")
         st.stop()
     except Exception as e:
         st.error(f"Connection failed: {e}")

@@ -4,8 +4,10 @@ Web app that connects to Snowflake using a programmatic access token and shows a
 
 ## Configuration
 
-- **Token file:** Place your Snowflake programmatic access token in `ocd-product-dashboard-token-secret.txt` (or set `SNOWFLAKE_TOKEN_FILE` to the path). The file is gitignored.
-- **Username:** Set the `SNOWFLAKE_USER` environment variable to the Snowflake user that the token belongs to.
+Set these environment variables (e.g. in your deployment or shell):
+
+- **`SNOWFLAKE_USER`** – Snowflake username that the token belongs to.
+- **`SNOWFLAKE_TOKEN`** – Snowflake programmatic access token (used as password).
 
 ## Setup and run (Pixi)
 
@@ -15,10 +17,11 @@ This project is configured as a [Pixi](https://pixi.sh) project. Install [pixi](
 cd heap-product-dashboard
 pixi install
 export SNOWFLAKE_USER=your_snowflake_username
+export SNOWFLAKE_TOKEN=your_access_token
 pixi run run
 ```
 
-Or in one step: `pixi run run` (set `SNOWFLAKE_USER` in your environment first).
+Or in one step: `pixi run run` (set `SNOWFLAKE_USER` and `SNOWFLAKE_TOKEN` in your environment first).
 
 ## Alternative: venv + pip
 
@@ -28,6 +31,7 @@ python -m venv .venv
 source .venv/bin/activate   # or .venv\Scripts\activate on Windows
 pip install -r requirements.txt
 export SNOWFLAKE_USER=your_snowflake_username
+export SNOWFLAKE_TOKEN=your_access_token
 streamlit run app.py
 ```
 
@@ -47,5 +51,5 @@ pixi run start
 
 ## Details
 
-- **Connection**: Uses `ANALYTICS.INTERMEDIATE`, warehouse `default`, account `jfb46703.us-east-1`. Authentication via programmatic access token (token in file, used as password).
+- **Connection**: Uses `ANALYTICS.INTERMEDIATE`, warehouse `default`, account `jfb46703.us-east-1`. Authentication via programmatic access token (`SNOWFLAKE_TOKEN` env var, used as password).
 - **Chart**: Plotly time series of `stg_conda_unified_telemetry` aggregated by year/month, `activity_source`, and `product`.
