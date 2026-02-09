@@ -1,13 +1,19 @@
-# Heap Product Dashboard
+# SnowSnake
 
-Web app that connects to Snowflake using a programmatic access token and shows an interactive time series of telemetry data. No login page—the app goes straight to the dashboard.
+Web app that connects to Snowflake using RSA key-pair authentication (LABS service account) and shows an interactive time series of telemetry data. No login page—the app goes straight to the dashboard.
 
 ## Configuration
 
-Set these environment variables (e.g. in your deployment or shell):
+Set these environment variables in your deployment (or shell):
 
-- **`SNOWFLAKE_USER`** – Snowflake username that the token belongs to.
-- **`SNOWFLAKE_TOKEN`** – Snowflake programmatic access token (used as password).
+| Variable | Required | Description |
+|----------|----------|-------------|
+| **`SNOWFLAKE_USER`** | No | Snowflake user (default: `LABS`, the service account). |
+| **`SNOWFLAKE_PRIVATE_KEY`** | One of these | Full PEM private key. Use `\n` for newlines if pasting as one line. |
+| **`SNOWFLAKE_PRIVATE_KEY_PATH`** | One of these | Path to a file containing the PEM private key (e.g. a mounted secret). |
+| **`SNOWFLAKE_PRIVATE_KEY_PASSPHRASE`** | No | Passphrase if the private key is encrypted. |
+
+You must provide the private key either as **`SNOWFLAKE_PRIVATE_KEY`** (PEM string) or **`SNOWFLAKE_PRIVATE_KEY_PATH`** (path to PEM file). The public key is registered in Snowflake for the LABS user by the data platform team.
 
 ## Setup and run (Pixi)
 
@@ -16,12 +22,11 @@ This project is configured as a [Pixi](https://pixi.sh) project. Install [pixi](
 ```bash
 cd heap-product-dashboard
 pixi install
-export SNOWFLAKE_USER=your_snowflake_username
-export SNOWFLAKE_TOKEN=your_access_token
+export SNOWFLAKE_USER=LABS
+export SNOWFLAKE_PRIVATE_KEY_PATH=/path/to/your-private-key.pem
+# or: export SNOWFLAKE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n..."
 pixi run run
 ```
-
-Or in one step: `pixi run run` (set `SNOWFLAKE_USER` and `SNOWFLAKE_TOKEN` in your environment first).
 
 ## Alternative: venv + pip
 
@@ -30,8 +35,8 @@ cd heap-product-dashboard
 python -m venv .venv
 source .venv/bin/activate   # or .venv\Scripts\activate on Windows
 pip install -r requirements.txt
-export SNOWFLAKE_USER=your_snowflake_username
-export SNOWFLAKE_TOKEN=your_access_token
+export SNOWFLAKE_USER=LABS
+export SNOWFLAKE_PRIVATE_KEY_PATH=/path/to/your-private-key.pem
 streamlit run app.py
 ```
 
@@ -51,5 +56,5 @@ pixi run start
 
 ## Details
 
-- **Connection**: Uses `ANALYTICS.INTERMEDIATE`, warehouse `default`, account `jfb46703.us-east-1`. Authentication via programmatic access token (`SNOWFLAKE_TOKEN` env var, used as password).
+- **Connection**: Uses `ANALYTICS.INTERMEDIATE`, warehouse `default`, account `jfb46703.us-east-1`. Authentication via RSA key-pair (LABS service account); private key from `SNOWFLAKE_PRIVATE_KEY` or `SNOWFLAKE_PRIVATE_KEY_PATH`.
 - **Chart**: Plotly time series of `stg_conda_unified_telemetry` aggregated by year/month, `activity_source`, and `product`.

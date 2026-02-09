@@ -1,7 +1,8 @@
 """
-Heap Product Dashboard – Snowflake auth via access token + interactive telemetry time series.
+SnowSnake – Snowflake key-pair auth + interactive telemetry time series.
 Run locally: streamlit run app.py
-Requires SNOWFLAKE_USER and SNOWFLAKE_TOKEN environment variables.
+Uses RSA key-pair auth; set SNOWFLAKE_USER (default LABS) and either SNOWFLAKE_PRIVATE_KEY
+or SNOWFLAKE_PRIVATE_KEY_PATH. Optional: SNOWFLAKE_PRIVATE_KEY_PASSPHRASE if key is encrypted.
 """
 import os
 
@@ -10,6 +11,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 import snowflake.connector
+from cryptography.hazmat.primitives import serialization
 
 CONN_PARAMS = {
     "account": "jfb46703.us-east-1",
@@ -26,17 +28,33 @@ ORDER BY 1, 2
 """
 
 
+def _load_private_key():
+    """Load PEM private key from SNOWFLAKE_PRIVATE_KEY (PEM string) or SNOWFLAKE_PRIVATE_KEY_PATH (file)."""
+    path = os.environ.get("SNOWFLAKE_PRIVATE_KEY_PATH")
+    pem_content = os.environ.get("SNOWFLAKE_PRIVATE_KEY")
+    if path:
+        with open(path, "rb") as f:
+            pem_bytes = f.read()
+    elif pem_content:
+        # Support newlines as literal \n (e.g. from single-line env var)
+        pem_bytes = pem_content.strip().replace("\\n", "\n").encode("utf-8")
+    else:
+        raise ValueError(
+            "Set SNOWFLAKE_PRIVATE_KEY (PEM string, use \\n for newlines) or "
+            "SNOWFLAKE_PRIVATE_KEY_PATH (path to PEM file)"
+        )
+    passphrase = os.environ.get("SNOWFLAKE_PRIVATE_KEY_PASSPHRASE")
+    password = passphrase.encode("utf-8") if passphrase else None
+    return serialization.load_pem_private_key(pem_bytes, password=password)
+
+
 def get_connection():
-    """Connect to Snowflake using programmatic access token (token as password)."""
-    user = os.environ.get("SNOWFLAKE_USER")
-    token = os.environ.get("SNOWFLAKE_TOKEN")
-    if not user:
-        raise ValueError("SNOWFLAKE_USER environment variable is required")
-    if not token:
-        raise ValueError("SNOWFLAKE_TOKEN environment variable is required")
+    """Connect to Snowflake using key-pair authentication (LABS service account)."""
+    user = os.environ.get("SNOWFLAKE_USER", "LABS")
+    private_key = _load_private_key()
     return snowflake.connector.connect(
         user=user,
-        password=token.strip(),
+        private_key=private_key,
         **CONN_PARAMS,
     )
 
@@ -85,8 +103,8 @@ def build_time_series_chart(df: pd.DataFrame) -> go.Figure:
 
 
 def main():
-    st.set_page_config(page_title="Heap Product Dashboard", page_icon="📊", layout="wide")
-    st.title("Heap Product Dashboard")
+    st.set_page_config(page_title="SnowSnake", page_icon="📊", layout="wide")
+    st.title("SnowSnake")
     st.caption("Snowflake telemetry time series")
 
     if "telemetry_df" not in st.session_state:
@@ -96,7 +114,7 @@ def main():
     try:
         conn = get_connection()
     except ValueError as e:
-        st.error(f"Configuration error: {e}. Set SNOWFLAKE_USER and SNOWFLAKE_TOKEN in the environment.")
+        st.error(f"Configuration error: {e}. Set SNOWFLAKE_USER (optional, default LABS) and SNOWFLAKE_PRIVATE_KEY or SNOWFLAKE_PRIVATE_KEY_PATH.")
         st.stop()
     except Exception as e:
         st.error(f"Connection failed: {e}")
