@@ -23,3 +23,4 @@ websockets = ">=12.0"
 [tasks]
 run = "streamlit run app.py"
 start = "python server.py"
+show-warehouses = "python scripts/show_warehouses.py"

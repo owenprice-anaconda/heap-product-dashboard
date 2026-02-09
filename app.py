@@ -13,12 +13,14 @@ import streamlit as st
 import snowflake.connector
 from cryptography.hazmat.primitives import serialization
 
-CONN_PARAMS = {
-    "account": "jfb46703.us-east-1",
-    "warehouse": "default",
-    "database": "ANALYTICS",
-    "schema": "INTERMEDIATE",
-}
+def _conn_params():
+    """Connection params with warehouse/database/schema overridable via env."""
+    return {
+        "account": os.environ.get("SNOWFLAKE_ACCOUNT", "jfb46703.us-east-1"),
+        "warehouse": os.environ.get("SNOWFLAKE_WAREHOUSE", "LABS"),
+        "database": os.environ.get("SNOWFLAKE_DATABASE", "ANALYTICS"),
+        "schema": os.environ.get("SNOWFLAKE_SCHEMA", "INTERMEDIATE"),
+    }
 
 TELEMETRY_QUERY = """
 SELECT YEAR(activity_ts) AS activity_year, MONTH(ACTIVITY_TS) AS activity_month, activity_source, product, count(*) as recs
@@ -55,7 +57,7 @@ def get_connection():
     return snowflake.connector.connect(
         user=user,
         private_key=private_key,
-        **CONN_PARAMS,
+        **_conn_params(),
     )
 
 

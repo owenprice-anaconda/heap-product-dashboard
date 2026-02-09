@@ -9,11 +9,27 @@ Set these environment variables in your deployment (or shell):
 | Variable | Required | Description |
 |----------|----------|-------------|
 | **`SNOWFLAKE_USER`** | No | Snowflake user (default: `LABS`, the service account). |
+| **`SNOWFLAKE_WAREHOUSE`** | No | Warehouse to use (default: `LABS`). Override with this env var if needed. |
+| **`SNOWFLAKE_DATABASE`** | No | Database (default: `ANALYTICS`). |
+| **`SNOWFLAKE_SCHEMA`** | No | Schema (default: `INTERMEDIATE`). |
 | **`SNOWFLAKE_PRIVATE_KEY`** | One of these | Full PEM private key. Use `\n` for newlines if pasting as one line. |
 | **`SNOWFLAKE_PRIVATE_KEY_PATH`** | One of these | Path to a file containing the PEM private key (e.g. a mounted secret). |
 | **`SNOWFLAKE_PRIVATE_KEY_PASSPHRASE`** | No | Passphrase if the private key is encrypted. |
 
-You must provide the private key either as **`SNOWFLAKE_PRIVATE_KEY`** (PEM string) or **`SNOWFLAKE_PRIVATE_KEY_PATH`** (path to PEM file). The public key is registered in Snowflake for the LABS user by the data platform team.
+You must provide the private key either as **`SNOWFLAKE_PRIVATE_KEY`** (PEM string) or **`SNOWFLAKE_PRIVATE_KEY_PATH`** (path to PEM file). The public key is registered in Snowflake for the LABS user by the data platform team. If you see "No active warehouse selected", set **`SNOWFLAKE_WAREHOUSE`** to the correct warehouse name (default is `LABS`).
+
+### Discovering warehouses (key-pair auth; no UI)
+
+Key-pair auth is used by the Python connector, not the Snowflake web UI. To list warehouses available to the LABS user, run the helper script (it connects as LABS with your key and runs `SHOW WAREHOUSES`). First try with warehouse `DEFAULT` (many accounts have one):
+
+```bash
+export SNOWFLAKE_USER=LABS
+export SNOWFLAKE_PRIVATE_KEY_PATH=./snowflake_private_key.pem
+export SNOWFLAKE_WAREHOUSE=LABS
+pixi run show-warehouses
+```
+
+If you get "No active warehouse", try another warehouse name if you know one, or ask the data platform team. The script prints a table; use the **name** column value as `SNOWFLAKE_WAREHOUSE`.
 
 ## Setup and run (Pixi)
 
