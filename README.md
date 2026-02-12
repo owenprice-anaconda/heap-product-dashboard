@@ -15,8 +15,14 @@ Set these environment variables in your deployment (or shell):
 | **`SNOWFLAKE_PRIVATE_KEY`** | One of these | Full PEM private key. Use `\n` for newlines if pasting as one line. |
 | **`SNOWFLAKE_PRIVATE_KEY_PATH`** | One of these | Path to a file containing the PEM private key (e.g. a mounted secret). |
 | **`SNOWFLAKE_PRIVATE_KEY_PASSPHRASE`** | No | Passphrase if the private key is encrypted. |
+| **`SNOWFLAKE_USE_SSO`** | Local only | Set to `1` (or `true`/`yes`) to use SSO (external browser) for local testing. |
+| **`SNOWFLAKE_AUTH`** | Local only | Set to `externalbrowser` as an alternative to `SNOWFLAKE_USE_SSO=1`. |
 
-You must provide the private key either as **`SNOWFLAKE_PRIVATE_KEY`** (PEM string) or **`SNOWFLAKE_PRIVATE_KEY_PATH`** (path to PEM file). The public key is registered in Snowflake for the LABS user by the data platform team. If you see "No active warehouse selected", set **`SNOWFLAKE_WAREHOUSE`** to the correct warehouse name (default is `LABS`).
+**Deployment (key-pair):** Set **`SNOWFLAKE_PRIVATE_KEY`** or **`SNOWFLAKE_PRIVATE_KEY_PATH`**. User defaults to `LABS`, warehouse to `LABS`.
+
+**Local testing (SSO):** Set **`SNOWFLAKE_USE_SSO=1`**. Run the app; enter your Snowflake username and click Connect. A browser window opens for SSO. Warehouse defaults to `default`. Do not set the private key env vars.
+
+If you see "No active warehouse selected", set **`SNOWFLAKE_WAREHOUSE`** to the correct warehouse name.
 
 ### Discovering warehouses (key-pair auth; no UI)
 
@@ -30,6 +36,21 @@ pixi run show-warehouses
 ```
 
 If you get "No active warehouse", try another warehouse name if you know one, or ask the data platform team. The script prints a table; use the **name** column value as `SNOWFLAKE_WAREHOUSE`.
+
+### Local testing (SSO + default warehouse)
+
+To run the dashboard locally with your personal Snowflake user and the `default` warehouse:
+
+1. Set **`SNOWFLAKE_USE_SSO=1`**. Do **not** set `SNOWFLAKE_PRIVATE_KEY` or `SNOWFLAKE_PRIVATE_KEY_PATH`.
+2. Run the app; enter your Snowflake username and click **Connect**. A browser window opens for SSO; complete login there.
+3. The app uses warehouse `default` and caches the session.
+
+```bash
+export SNOWFLAKE_USE_SSO=1
+pixi run run
+```
+
+Optional: set **`SNOWFLAKE_USER`** in the environment to pre-fill the username in the login form.
 
 ## Setup and run (Pixi)
 

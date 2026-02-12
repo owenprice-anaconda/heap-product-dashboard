@@ -1,0 +1,12 @@
+{
+  "Computer vision": [
+    "opencv",
+    "pytorch",
+    "ultralytics",
+    "pillow",
+    "scikit-image",
+    "imageio",
+    "torchvision",
+    "face_recognition"
+  ]
+}
